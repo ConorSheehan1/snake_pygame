@@ -10,6 +10,7 @@ class Snake:
   def spawn_food(self):
     return [random.randrange(1, 72)*10, random.randrange(1, 46)*10]
 
+
   def setup_pygame(self):
     check_errors = pygame.init()
     pygame.font.init()
@@ -24,6 +25,7 @@ class Snake:
     self.black = pygame.Color(0, 0, 0) # score
     self.white = pygame.Color(255,255,255) # background
     self.brown = pygame.Color(165,42,42) # food
+
 
   def __init__(self, through_walls=False, speed=30):
     self.setup_pygame()
@@ -45,6 +47,31 @@ class Snake:
     self.through_walls = through_walls
     self.speed = speed
 
+
+  def render_font(self, message, location=(50,20)):
+    local_surface = pygame.font.SysFont("monaco", 30).render(message, True, self.white)
+    rect = local_surface.get_rect()
+    rect.midtop = location
+    self.play_surface.blit(local_surface, rect)
+
+
+  def start_menu(self): 
+    offset = self.surface_dimensions[0]/2
+    self.render_font("Controls: WASD or ARROWD KEYS", (offset,20))
+    self.render_font("Press ENTER to start", (offset,40))
+    self.render_font("Press ESCAPE to stop", (offset,60))
+    pygame.display.flip()
+
+    for event in pygame.event.get():
+      if event.type == pygame.KEYDOWN:
+        if event.key == pygame.K_RETURN:
+          print("starting game")
+          return True 
+        elif event.key == pygame.K_ESCAPE:
+          
+    return False
+
+
   def show_score(self, position=(50,20)):
     my_font = pygame.font.SysFont("monaco", 24)
     score_surface = my_font.render("Score :{}".format(self.score), True, self.black)
@@ -52,6 +79,7 @@ class Snake:
     score_rect.midtop = position
     self.play_surface.blit(score_surface, score_rect)
     # pygame.display.flip()
+
 
   def game_over(self):
     my_font = pygame.font.SysFont("monaco", 72)
@@ -64,6 +92,7 @@ class Snake:
     print("game over")
     time.sleep(4)
     pygame.quit()
+
 
   def is_valid_change(self):
     x = ["LEFT", "RIGHT"]
@@ -99,9 +128,6 @@ class Snake:
 
   def draw(self):
     self.play_surface.fill(self.white)
-    # pygame.display.flip()
-
-    # draw snake
     for i, pos in enumerate(self.snake_body):
       # if you cross youself
       if i > 0 and self.snake_pos == pos:
@@ -124,16 +150,13 @@ class Snake:
     pygame.display.flip()
     self.fps_controller.tick(self.speed)
     return True
+    
 
   def game_loop(self):
     self.keep_going=True
     while self.keep_going:
       for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-          print("quit")
-          pygame.quit()
-          # sys.exit()
-        elif event.type == pygame.KEYDOWN:
+        if event.type == pygame.KEYDOWN:
           if event.key in [pygame.K_RIGHT, ord('d')]:
             self.changeto = "RIGHT"
           elif event.key in [pygame.K_LEFT, ord('a')]:
@@ -143,8 +166,9 @@ class Snake:
           elif event.key in [pygame.K_DOWN, ord('s')]:
             self.changeto = "DOWN"
           elif event.key == pygame.K_ESCAPE:
-            print("exit")
-            pygame.event.post(pygame.event.Event(pygame.QUIT))
+            print("exiting")
+            pygame.quit()
+            return
 
           if self.is_valid_change():
             self.direction = self.changeto
@@ -153,8 +177,15 @@ class Snake:
       self.keep_going = self.draw()
 
     self.game_over()
-    time.sleep(1)
+
+
+  def start_menu_loop(self):
+    self.start_game = False
+    while not self.start_game:
+      self.start_game = self.start_menu()
+
 
 if __name__ == "__main__":
   s = Snake(through_walls=False, speed=10)
+  s.start_menu_loop()
   s.game_loop()
