@@ -48,8 +48,8 @@ class Snake:
     self.speed = speed
 
 
-  def render_font(self, message, location=(50,20)):
-    local_surface = pygame.font.SysFont("monaco", 30).render(message, True, self.white)
+  def render_font(self, message, location=(50,20), size=30, color="white"):
+    local_surface = pygame.font.SysFont("monaco", size).render(message, True, getattr(self, color))
     rect = local_surface.get_rect()
     rect.midtop = location
     self.play_surface.blit(local_surface, rect)
@@ -59,17 +59,19 @@ class Snake:
     offset = self.surface_dimensions[0]/2
     self.render_font("Controls: WASD or ARROWD KEYS", (offset,20))
     self.render_font("Press ENTER to start", (offset,40))
-    self.render_font("Press ESCAPE to stop", (offset,60))
+    self.render_font("Press ESCAPE to quit", (offset,60))
     pygame.display.flip()
 
     for event in pygame.event.get():
       if event.type == pygame.KEYDOWN:
         if event.key == pygame.K_RETURN:
           print("starting game")
-          return True 
+          return False 
         elif event.key == pygame.K_ESCAPE:
+          print("exiting game")
+          pygame.quit()
           
-    return False
+    return True
 
 
   def show_score(self, position=(50,20)):
@@ -82,16 +84,21 @@ class Snake:
 
 
   def game_over(self):
-    my_font = pygame.font.SysFont("monaco", 72)
-    go_surf = my_font.render("Game over!", True, self.red)
-    go_rect = go_surf.get_rect()
-    go_rect.midtop = (360, 15)
+    self.play_surface.fill(self.black)
     self.show_score(position=(360, 120))
-    self.play_surface.blit(go_surf, go_rect)
+    self.render_font("Game over!", (360, 15), size=72, color="red")
+    self.render_font("Press ENTER to play again", (360,140), color="white")
+    self.render_font("Press ESCAPE to quit", (360,160), color="white")
     pygame.display.flip()
-    print("game over")
-    time.sleep(4)
-    pygame.quit()
+
+    for event in pygame.event.get():
+      if event.type == pygame.KEYDOWN:
+        if event.key == pygame.K_RETURN:
+          return False
+        elif event.key == pygame.K_ESCAPE:
+          print("exiting game")
+          pygame.quit()
+    return True
 
 
   def is_valid_change(self):
@@ -176,16 +183,18 @@ class Snake:
       self.move_snake()
       self.keep_going = self.draw()
 
-    self.game_over()
 
-
-  def start_menu_loop(self):
-    self.start_game = False
-    while not self.start_game:
-      self.start_game = self.start_menu()
+# outside of class
+def loop_callback(callback):
+  loop = True
+  while loop:
+    loop = callback()
+  print("done loop")
 
 
 if __name__ == "__main__":
-  s = Snake(through_walls=False, speed=10)
-  s.start_menu_loop()
-  s.game_loop()
+  while True:
+    s = Snake(through_walls=False, speed=10)
+    loop_callback(s.start_menu)
+    s.game_loop()
+    loop_callback(s.game_over)
